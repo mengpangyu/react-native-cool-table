@@ -2,7 +2,7 @@ import Cell from './components/Cell';
 import Row from './components/Row';
 import MainTable from './components/Table';
 import Sort from './components/Sort';
-import { ITableComponentType } from './types/index';
+import type { ITableComponentType } from './types/index';
 export type {
   ITableProps,
   ITableCellProps,

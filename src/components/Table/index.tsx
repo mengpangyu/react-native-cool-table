@@ -22,7 +22,7 @@ import {
 
 import styles from './styles';
 import Empty from '../Empty';
-import { ITableProps, TItem, ITableColumn } from '../../types';
+import type { ITableProps, TItem, ITableColumn } from '../../types';
 import { isFunction } from 'lodash';
 import Row from '../Row';
 

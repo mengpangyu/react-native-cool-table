@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { View, Image } from 'react-native';
-import { IIconProps } from '../../types';
+import type { IIconProps } from '../../types';
 import { ICON_MAP } from '../../constant';
 
 const Icon = ({ type, style, imageStyle, source }: IIconProps) => {

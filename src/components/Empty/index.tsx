@@ -2,7 +2,7 @@
 
 import React, { memo } from 'react';
 import { View, Image, Text } from 'react-native';
-import { IEmptyProps } from '../../types';
+import type { IEmptyProps } from '../../types';
 import { EMPTY_IMAGE } from '../../constant';
 import styles from './styles';
 

@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { View } from 'react-native';
-import { ITableSortProps } from '../../types';
-import Icon from '../Icon';
+import type { ITableSortProps } from '../../types';
 import styles from './styles';
 
 const Sort = ({
@@ -11,9 +10,25 @@ const Sort = ({
   descIconProps,
 }: ITableSortProps) => {
   return (
-    <View style={style}>
-      <Icon type="TriangleUp" style={styles.up_icon} {...ascIconProps} />
-      <Icon type="TriangleDown" {...descIconProps} />
+    <View style={[styles.container, style]}>
+      {/* 向上箭头 */}
+      <View
+        style={[
+          styles.triangle,
+          styles.triangleUp,
+          sortStatus === 'asc' && styles.triangleActive,
+          ascIconProps?.style,
+        ]}
+      />
+      {/* 向下箭头 */}
+      <View
+        style={[
+          styles.triangle,
+          styles.triangleDown,
+          sortStatus === 'desc' && styles.triangleActive,
+          descIconProps?.style,
+        ]}
+      />
     </View>
   );
 };

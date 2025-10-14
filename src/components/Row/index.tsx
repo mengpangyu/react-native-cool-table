@@ -15,7 +15,7 @@ import {
   LayoutAnimation,
   ScrollView,
 } from 'react-native';
-import { ITableRowProps, TItem, TSortType } from '../../types';
+import type { ITableRowProps, TItem, TSortType } from '../../types';
 import { isArray, isEmpty, isFunction, isNil } from 'lodash';
 import { ALIGN_MAP } from '../../constant';
 import Cell from '../Cell';
@@ -259,6 +259,8 @@ const Row = (
     }
     return null;
   };
+
+  console.log('rowIndex', rowIndex);
 
   return (
     <TouchableWithoutFeedback

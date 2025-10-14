@@ -8,8 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { Text, View, TouchableOpacity } from 'react-native';
-import { ITableCellProps } from '../../types';
-import Icon from '../Icon';
+import type { ITableCellProps } from '../../types';
 import { SORT_STATUS_MAP } from '../../constant';
 import Sort from '../Sort';
 import { useUpdateEffect } from '../../hooks';
@@ -113,7 +112,11 @@ const Cell = (
   };
 
   const renderArrow = () => {
-    return isShowArrow ? <Icon type="Right" /> : null;
+    return isShowArrow ? (
+      <View style={styles.rightArrow}>
+        <View style={styles.rightArrowTriangle} />
+      </View>
+    ) : null;
   };
 
   const renderSort = () => {
@@ -124,13 +127,14 @@ const Cell = (
 
   const renderExpand = () => {
     return isShowExpand ? (
-      <Icon
-        type="TriangleLeft"
+      <View
         style={[
           styles.expand_icon,
           { transform: [{ rotate: expanded ? '90deg' : '0deg' }] },
         ]}
-      />
+      >
+        <View style={styles.expandTriangle} />
+      </View>
     ) : null;
   };
   return (

@@ -1,12 +1,12 @@
-import {
-  Animated,
-  ImageStyle,
-  LayoutChangeEvent,
+import type { MutableRefObject, ReactNode } from 'react';
+import type {
+  StyleProp,
   TextStyle,
   ViewStyle,
+  ImageStyle,
+  LayoutChangeEvent,
+  Animated,
 } from 'react-native';
-import { MutableRefObject, ReactNode } from 'react';
-import { StyleProp } from 'react-native';
 
 type TAnyObject = Record<string, any>;
 

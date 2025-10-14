@@ -1,4 +1,4 @@
-import { FlexAlignType, ImageStyle, StyleProp } from 'react-native';
+import type { FlexAlignType, ImageStyle, StyleProp } from 'react-native';
 
 export const ALIGN_MAP: Record<string, FlexAlignType> = {
   left: 'flex-start',
