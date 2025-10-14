@@ -55,7 +55,7 @@ export const renderStatusBadge = (
     busy: { color: colors.warning, text: '忙碌' },
   };
 
-  const config = statusConfig || defaultConfig;
+  const config: any = statusConfig || defaultConfig;
   const statusInfo = config[val] || { color: colors.textLight };
 
   return (

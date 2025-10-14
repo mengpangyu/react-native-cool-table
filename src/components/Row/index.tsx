@@ -162,7 +162,7 @@ const Row = (
         const defaultRender = () => {
           return (
             <Cell
-              ref={(ref) => (cellRefs.current[colIndex] = ref)}
+              ref={(cellRef) => (cellRefs.current[colIndex] = cellRef)}
               val={value}
               onSortChange={_onSortChange}
               onExpandChange={_onExpandChange}

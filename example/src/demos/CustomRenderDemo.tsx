@@ -16,11 +16,11 @@ const CustomRenderDemo: React.FC = () => {
   const data = generateUserProfiles(4);
 
   // 处理单元格点击
-  const handleCellPress = useCallback((params: any) => {
-    Alert.alert('单元格点击', `点击了 ${params.col.title}: ${params.val}`, [
-      { text: '确定' },
-    ]);
-  }, []);
+  // const handleCellPress = useCallback((params: any) => {
+  //   Alert.alert('单元格点击', `点击了 ${params.col.title}: ${params.val}`, [
+  //     { text: '确定' },
+  //   ]);
+  // }, []);
 
   // 自定义头像渲染
   const renderAvatar = useCallback((params: any) => {
