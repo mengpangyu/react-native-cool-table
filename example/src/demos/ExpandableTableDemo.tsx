@@ -1,6 +1,9 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import CoolTable, { ITableColumn } from 'react-native-cool-table';
+import type { ITableColumn } from 'react-native-cool-table';
+import DemoLayout from '../components/DemoLayout';
+import TableContainer from '../components/TableContainer';
+import { colors } from '../styles/commonStyles';
 
 const ExpandableTableDemo: React.FC = () => {
   // 部门数据（带子部门）
@@ -186,86 +189,32 @@ const ExpandableTableDemo: React.FC = () => {
     renderExpand: renderExpandContent,
   };
 
+  const features = [
+    '树形数据结构展示',
+    '点击展开/收起子内容',
+    '自定义展开内容渲染',
+    '支持多层级嵌套',
+    '展开动画效果',
+    '可配置是否自动折叠其他项',
+  ];
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>可展开表格</Text>
-        <Text style={styles.description}>
-          点击有子数据的行可以展开查看详细信息，支持树形结构展示
-        </Text>
-      </View>
-
-      <View style={styles.tableContainer}>
-        <CoolTable
-          data={data}
-          columns={columns}
-          treeConfig={treeConfig}
-          style={styles.table}
-          rowStyle={styles.row}
-          headerRowStyle={styles.headerRow}
-        />
-      </View>
-
-      <View style={styles.features}>
-        <Text style={styles.featuresTitle}>功能特点：</Text>
-        <Text style={styles.featureItem}>• 树形数据结构展示</Text>
-        <Text style={styles.featureItem}>• 点击展开/收起子内容</Text>
-        <Text style={styles.featureItem}>• 自定义展开内容渲染</Text>
-        <Text style={styles.featureItem}>• 支持多层级嵌套</Text>
-        <Text style={styles.featureItem}>• 展开动画效果</Text>
-        <Text style={styles.featureItem}>• 可配置是否自动折叠其他项</Text>
-      </View>
-    </View>
+    <DemoLayout
+      title="可展开表格"
+      description="点击有子数据的行可以展开查看详细信息，支持树形结构展示"
+      features={features}
+    >
+      <TableContainer
+        data={data}
+        columns={columns}
+        treeConfig={treeConfig}
+        flex
+      />
+    </DemoLayout>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e8e8e8',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  tableContainer: {
-    margin: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    flex: 1,
-  },
-  table: {
-    backgroundColor: '#fff',
-  },
-  row: {
-    minHeight: 52,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerRow: {
-    backgroundColor: '#fafafa',
-    borderBottomWidth: 2,
-    borderBottomColor: '#e8e8e8',
-  },
   budgetContainer: {
     alignItems: 'flex-end',
     paddingRight: 8,
@@ -273,7 +222,7 @@ const styles = StyleSheet.create({
   budgetText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#52c41a',
+    color: colors.success,
   },
   expandContainer: {
     padding: 16,
@@ -291,7 +240,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#1890ff',
+    borderLeftColor: colors.primary,
   },
   groupHeader: {
     flexDirection: 'row',
@@ -307,7 +256,7 @@ const styles = StyleSheet.create({
   },
   groupMembers: {
     fontSize: 13,
-    color: '#1890ff',
+    color: colors.primary,
     fontWeight: '500',
   },
   groupLeader: {
@@ -340,34 +289,15 @@ const styles = StyleSheet.create({
   },
   projectText: {
     fontSize: 12,
-    color: '#1890ff',
+    color: colors.primary,
   },
   emptyExpand: {
     padding: 20,
     alignItems: 'center',
   },
   emptyExpandText: {
-    color: '#999',
+    color: colors.textLight,
     fontSize: 14,
-  },
-  features: {
-    margin: 16,
-    marginTop: 0,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-  },
-  featuresTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  featureItem: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-    lineHeight: 20,
   },
 });
 

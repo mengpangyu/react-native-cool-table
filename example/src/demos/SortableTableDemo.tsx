@@ -1,20 +1,15 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import CoolTable, { ITableColumn, TSortType } from 'react-native-cool-table';
+import { View, Text } from 'react-native';
+import type { ITableColumn, TSortType } from 'react-native-cool-table';
+import DemoLayout from '../components/DemoLayout';
+import TableContainer from '../components/TableContainer';
+import { generateStudentScores, sortData } from '../utils/dataUtils';
+import { renderScore } from '../utils/renderUtils';
+import { commonStyles } from '../styles/commonStyles';
 
 const SortableTableDemo: React.FC = () => {
-  // 学生成绩数据
-  const initialData = [
-    { id: 1, name: '张三', math: 85, english: 92, physics: 78, total: 255 },
-    { id: 2, name: '李四', math: 92, english: 88, physics: 85, total: 265 },
-    { id: 3, name: '王五', math: 78, english: 95, physics: 82, total: 255 },
-    { id: 4, name: '赵六', math: 88, english: 85, physics: 90, total: 263 },
-    { id: 5, name: '孙七', math: 95, english: 78, physics: 88, total: 261 },
-    { id: 6, name: '周八', math: 82, english: 90, physics: 85, total: 257 },
-    { id: 7, name: '吴九', math: 90, english: 82, physics: 92, total: 264 },
-    { id: 8, name: '郑十', math: 87, english: 89, physics: 86, total: 262 },
-  ];
-
+  // 使用工具函数生成学生成绩数据
+  const initialData = generateStudentScores(8);
   const [data, setData] = useState(initialData);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -25,43 +20,11 @@ const SortableTableDemo: React.FC = () => {
   const handleSortChange = useCallback(
     ({ key, sort }: { key: string; colIndex: number; sort: TSortType }) => {
       setSortConfig({ key, sort });
-
-      const sortedData = [...data].sort((a, b) => {
-        const aVal = a[key as keyof typeof a];
-        const bVal = b[key as keyof typeof b];
-
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sort === 'asc' ? aVal - bVal : bVal - aVal;
-        }
-
-        const aStr = String(aVal).toLowerCase();
-        const bStr = String(bVal).toLowerCase();
-
-        if (sort === 'asc') {
-          return aStr.localeCompare(bStr);
-        } else {
-          return bStr.localeCompare(aStr);
-        }
-      });
-
+      const sortedData = sortData(data, key, sort);
       setData(sortedData);
     },
     [data]
   );
-
-  // 自定义分数渲染
-  const renderScore = useCallback((params: any) => {
-    const { val } = params;
-    let color = '#52c41a'; // 绿色 - 优秀
-    if (val < 60) color = '#ff4d4f'; // 红色 - 不及格
-    else if (val < 80) color = '#fa8c16'; // 橙色 - 良好
-
-    return (
-      <View style={styles.scoreContainer}>
-        <Text style={[styles.scoreText, { color }]}>{val}</Text>
-      </View>
-    );
-  }, []);
 
   // 自定义总分渲染
   const renderTotal = useCallback((params: any) => {
@@ -122,107 +85,44 @@ const SortableTableDemo: React.FC = () => {
     },
   ];
 
+  const features = [
+    '点击表头进行排序',
+    '支持升序/降序切换',
+    '默认排序设置（数学列默认降序）',
+    '自定义分数颜色显示',
+    '总分优秀标识',
+    '实时显示排序状态',
+  ];
+
+  // 排序信息组件
+  const sortInfo = sortConfig && (
+    <Text style={commonStyles.sortInfo}>
+      当前排序: {columns.find((col) => col.key === sortConfig.key)?.title} -
+      {sortConfig.sort === 'asc' ? '升序' : '降序'}
+    </Text>
+  );
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>排序表格</Text>
-        <Text style={styles.description}>
-          点击表头可以对数据进行排序，支持升序和降序切换
-        </Text>
-        {sortConfig && (
-          <Text style={styles.sortInfo}>
-            当前排序: {columns.find((col) => col.key === sortConfig.key)?.title}{' '}
-            - {sortConfig.sort === 'asc' ? '升序' : '降序'}
-          </Text>
-        )}
-      </View>
-
-      <View style={styles.tableContainer}>
-        <CoolTable
-          data={data}
-          columns={columns}
-          onSortChange={handleSortChange}
-          style={styles.table}
-          rowStyle={styles.row}
-          headerRowStyle={styles.headerRow}
-        />
-      </View>
-
-      <View style={styles.features}>
-        <Text style={styles.featuresTitle}>功能特点：</Text>
-        <Text style={styles.featureItem}>• 点击表头进行排序</Text>
-        <Text style={styles.featureItem}>• 支持升序/降序切换</Text>
-        <Text style={styles.featureItem}>• 默认排序设置（数学列默认降序）</Text>
-        <Text style={styles.featureItem}>• 自定义分数颜色显示</Text>
-        <Text style={styles.featureItem}>• 总分优秀标识</Text>
-        <Text style={styles.featureItem}>• 实时显示排序状态</Text>
-      </View>
-    </View>
+    <DemoLayout
+      title="排序表格"
+      description="点击表头可以对数据进行排序，支持升序和降序切换"
+      extraInfo={sortInfo}
+      features={features}
+    >
+      <TableContainer
+        data={data}
+        columns={columns}
+        onSortChange={handleSortChange}
+        flex
+      />
+    </DemoLayout>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e8e8e8',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  sortInfo: {
-    fontSize: 12,
-    color: '#1890ff',
-    fontStyle: 'italic',
-  },
-  tableContainer: {
-    margin: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    flex: 1,
-  },
-  table: {
-    backgroundColor: '#fff',
-  },
-  row: {
-    minHeight: 48,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerRow: {
-    backgroundColor: '#fafafa',
-    borderBottomWidth: 2,
-    borderBottomColor: '#e8e8e8',
-  },
-  scoreContainer: {
-    alignItems: 'center',
-  },
-  scoreText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
+// 局部样式（只保留特殊的样式）
+const styles = {
   totalContainer: {
-    alignItems: 'center',
+    alignItems: 'center' as const,
     paddingVertical: 4,
   },
   topScore: {
@@ -232,7 +132,7 @@ const styles = StyleSheet.create({
   },
   totalText: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: 'bold' as const,
     color: '#333',
   },
   topScoreText: {
@@ -241,27 +141,8 @@ const styles = StyleSheet.create({
   topLabel: {
     fontSize: 10,
     color: '#52c41a',
-    fontWeight: '500',
+    fontWeight: '500' as const,
   },
-  features: {
-    margin: 16,
-    marginTop: 0,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-  },
-  featuresTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  featureItem: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-    lineHeight: 20,
-  },
-});
+};
 
 export default SortableTableDemo;
