@@ -1,0 +1,22 @@
+{
+  "name": "react-native-cool-table-example",
+  "displayName": "CoolTable Example",
+  "expo": {
+    "name": "react-native-cool-table-example",
+    "slug": "react-native-cool-table-example",
+    "description": "Example app for react-native-cool-table",
+    "privacy": "public",
+    "version": "1.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}
