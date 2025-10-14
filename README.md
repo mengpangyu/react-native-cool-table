@@ -11,7 +11,7 @@ npm install react-native-cool-table
 ## Usage
 
 ```js
-import CoolTable from "react-native-cool-table";
+import CoolTable from 'react-native-cool-table';
 
 // ...
 
@@ -25,3 +25,8 @@ See the [contributing guide](CONTRIBUTING.md) to learn how to contribute to the 
 ## License
 
 MIT
+
+## TODO
+
+1. sort 功能抽离 context
+2. 折叠展开状态抽离 context

@@ -44,7 +44,10 @@ const DemoLayout: React.FC<DemoLayoutProps> = ({
 
   if (scrollable) {
     return (
-      <ScrollView style={commonStyles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={commonStyles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {content}
       </ScrollView>
     );
