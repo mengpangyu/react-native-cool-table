@@ -115,6 +115,7 @@ const Row = (
           width,
           align = 'right',
           render,
+          renderHeader,
           style: cStyle,
           hStyle,
           fixed,
@@ -176,8 +177,9 @@ const Row = (
           );
         };
 
-        const cell = isFunction(render)
-          ? render({ val: value, defaultRender, ...commonParams })
+        const renderer = isHeader ? renderHeader : render;
+        const cell = isFunction(renderer)
+          ? renderer({ val: value, defaultRender, ...commonParams })
           : defaultRender();
 
         return fixed ? (

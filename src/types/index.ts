@@ -97,6 +97,7 @@ export interface ITableColumn {
   touchStyle?: StyleProp<ViewStyle>; // 点击区域style;
   onPress?: (params: Omit<ITableColumnParams, 'defaultRender'>) => void; // 点击
   render?: (params: ITableColumnParams) => ReactNode; // 渲染body
+  renderHeader?: (params: ITableColumnParams) => ReactNode; // 渲染头部
   sortable?: boolean;
   onSort?: () => void;
   defaultSort?: TSortType;
