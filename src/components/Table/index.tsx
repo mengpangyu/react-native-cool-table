@@ -4,7 +4,6 @@ import React, {
   isValidElement,
   forwardRef,
   memo,
-  useImperativeHandle,
   useState,
   useMemo,
   useEffect,
@@ -46,13 +45,20 @@ const Table = (
     emptyProps,
     treeConfig,
     EmptyComponent,
+    keyExtractor,
   }: ITableProps,
-  ref: any
+  _ref: any
 ) => {
   const [_columns, setColumns] = useState<ITableColumn[]>(columns);
   const rowRefs = useRef<any[]>([]);
   const [contentWidth, setContentWidth] = useState(0);
   const [positionX] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    if (rowRefs.current.length > data.length) {
+      rowRefs.current = rowRefs.current.slice(0, data.length);
+    }
+  }, [data.length]);
 
   const headerData = useMemo(() => {
     const titleData: any = {};
@@ -70,64 +76,78 @@ const Table = (
     [positionX]
   );
 
-  useImperativeHandle(ref, () => ({}));
-
   useEffect(() => {
-    // 如果columns里面有fix，则提前到第一列
     const fixedColumns = columns.filter((column) => column.fixed) ?? [];
     const normalColumns = columns.filter((column) => !column.fixed) ?? [];
     setColumns([...fixedColumns, ...normalColumns]);
   }, [columns]);
 
-  const _onLayout = (e: LayoutChangeEvent) => {
-    const { width } = e.nativeEvent.layout;
-    setContentWidth(width);
-    onLayout?.(e);
-  };
+  const _onLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      const { width } = e.nativeEvent.layout;
+      setContentWidth(width);
+      onLayout?.(e);
+    },
+    [onLayout]
+  );
 
-  const onExpandChange = (expanded: boolean, rowIndex: number) => {
-    if (treeConfig?.autoCollapseOthers && expanded) {
-      rowRefs.current?.forEach((rowRef, index) => {
-        if (rowIndex !== index) {
-          rowRef?.collapse();
-        }
-      });
-    }
-  };
+  const onExpandChange = useCallback(
+    (expanded: boolean, rowIndex: number) => {
+      if (treeConfig?.autoCollapseOthers && expanded) {
+        rowRefs.current?.forEach((rowRef, index) => {
+          if (rowIndex !== index) {
+            rowRef?.collapse();
+          }
+        });
+      }
+    },
+    [treeConfig]
+  );
 
   const getListKey = useCallback(
-    (item, index) => `table-list-${JSON.stringify(item).slice(-1000)}-${index}`,
-    []
+    (item: TItem, index: number) => {
+      if (keyExtractor) {
+        return keyExtractor(item, index);
+      }
+      return String(index);
+    },
+    [keyExtractor]
   );
 
-  const renderItem = ({ item, index }: { item: TItem; index: number }) => (
-    <Row
-      key={`table-row-${index}`}
-      style={rowStyle}
-      onPressRow={onPressRow}
-      data={item}
-      rowIndex={index}
-      columns={_columns}
-      positionX={positionX}
-      treeConfig={treeConfig}
-      ref={(rowRef) => (rowRefs.current[index] = rowRef)}
-      onExpandChange={onExpandChange}
-    />
+  const renderItem = useCallback(
+    ({ item, index }: { item: TItem; index: number }) => (
+      <Row
+        key={`table-row-${index}`}
+        style={rowStyle}
+        onPressRow={onPressRow}
+        data={item}
+        rowIndex={index}
+        columns={_columns}
+        positionX={positionX}
+        treeConfig={treeConfig}
+        ref={(rowRef: any) => (rowRefs.current[index] = rowRef)}
+        onExpandChange={onExpandChange}
+      />
+    ),
+    [rowStyle, onPressRow, _columns, positionX, treeConfig, onExpandChange]
   );
 
-  const renderHeader = () => (
-    <Row
-      onSortChange={onSortChange}
-      style={headerRowStyle}
-      isHeader={true}
-      data={headerData}
-      columns={_columns}
-      positionX={positionX}
-      rowIndex={-1}
-    />
+  const renderHeader = useCallback(
+    () => (
+      <Row
+        onSortChange={onSortChange}
+        style={headerRowStyle}
+        isHeader={true}
+        data={headerData}
+        columns={_columns}
+        positionX={positionX}
+        rowIndex={-1}
+      />
+    ),
+    [onSortChange, headerRowStyle, headerData, _columns, positionX]
   );
 
-  const renderFooter = () => {
+  const renderFooter = useCallback(() => {
     if (FooterComponent) {
       return (
         <Animated.View
@@ -144,10 +164,10 @@ const Table = (
       );
     }
     return null;
-  };
+  }, [FooterComponent, contentWidth, positionX]);
 
-  const renderEmpty = () => {
-    return (
+  const renderEmpty = useCallback(
+    () => (
       <>
         {renderHeader()}
         <Animated.View
@@ -166,8 +186,16 @@ const Table = (
           )}
         </Animated.View>
       </>
-    );
-  };
+    ),
+    [
+      renderHeader,
+      contentWidth,
+      positionX,
+      emptyWrapperStyle,
+      EmptyComponent,
+      emptyProps,
+    ]
+  );
 
   return (
     <View style={[styles.content, style]} onLayout={_onLayout}>

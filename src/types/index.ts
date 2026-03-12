@@ -131,13 +131,6 @@ export interface ITableRowProps extends ICommonTableProps {
   onExpandChange?: (expanded: boolean, rowIndex: number) => void;
 }
 
-export interface ITableCellProps
-  extends Omit<ITableColumnParams, 'defaultRender'>,
-    ICommonTableProps {
-  expanded?: boolean;
-  onExpandChange?: () => void;
-}
-
 export interface ITableSortProps {
   sortStatus?: TSortType;
   style?: StyleProp<ViewStyle>;

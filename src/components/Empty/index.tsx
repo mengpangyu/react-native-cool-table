@@ -17,7 +17,7 @@ const Empty = ({
     <View style={[styles.container, style]}>
       <Image
         source={image || EMPTY_IMAGE}
-        style={[styles.imageStyle, imageStyle, imageStyle]}
+        style={[styles.imageStyle, imageStyle]}
       />
       <Text style={[styles.textStyle, textStyle]}>{description}</Text>
     </View>

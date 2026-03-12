@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   memo,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -41,6 +42,12 @@ const Row = (
 ) => {
   const cellRefs = useRef<any[]>([]);
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (cellRefs.current.length > columns.length) {
+      cellRefs.current = cellRefs.current.slice(0, columns.length);
+    }
+  }, [columns.length]);
   const nextExpandable = useMemo(() => {
     return !isEmpty(data?.children) && treeConfig ? treeConfig : undefined;
   }, [treeConfig, data?.children]);
@@ -55,7 +62,7 @@ const Row = (
 
   useUpdateEffect(() => {
     onExpandChange?.(expanded, rowIndex);
-  }, [expanded]);
+  }, [expanded, onExpandChange, rowIndex]);
 
   const _onPressRow = useCallback(() => {
     onPressRow?.({ item: data, rowIndex });
@@ -259,8 +266,6 @@ const Row = (
     }
     return null;
   };
-
-  console.log('rowIndex', rowIndex);
 
   return (
     <TouchableWithoutFeedback

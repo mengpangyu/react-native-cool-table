@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 0.5,
-    backgroundColor: '#000000',
+    backgroundColor: '#E8E8E8',
   },
 });
 

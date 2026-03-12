@@ -58,7 +58,7 @@ const Cell = (
     if (isShowSort && isFunction(onSortChange) && sortStatus) {
       onSortChange({ colIndex, sort: sortStatus, key: col?.key ?? '' });
     }
-  }, [sortStatus, isShowSort]);
+  }, [sortStatus, isShowSort, onSortChange, colIndex, col]);
 
   const resetSort = useCallback(() => setSortStatus(undefined), []);
 

@@ -18,7 +18,7 @@ const TableTemp: any = MainTable;
 TableTemp.sortStatus = SORT_STATUS_MAP;
 TableTemp.Cell = Cell;
 TableTemp.Row = Row;
-TableTemp.Cell = Sort;
+TableTemp.Sort = Sort;
 
 const CoolTable = TableTemp as ITableComponentType;
 
