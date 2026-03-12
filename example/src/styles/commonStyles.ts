@@ -26,7 +26,6 @@ export const commonStyles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // 表格容器样式
   tableContainer: {
     margin: 16,
     backgroundColor: '#fff',

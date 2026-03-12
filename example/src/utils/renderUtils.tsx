@@ -1,52 +1,49 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import type { ITableColumnParams } from 'react-native-cool-table';
 import { colors } from '../styles/commonStyles';
 
-// 薪资渲染
-export const renderSalary = (params: any) => {
-  const { val } = params;
+export const renderSalary = ({ val }: ITableColumnParams) => {
+  const numVal = val as unknown as number;
   const color =
-    val >= 20000
-      ? colors.error
-      : val >= 15000
-      ? colors.warning
-      : colors.success;
-
-  return (
-    <View style={styles.salaryContainer}>
-      <Text style={[styles.salaryText, { color }]}>
-        ¥{val?.toLocaleString()}
-      </Text>
-    </View>
-  );
-};
-
-// 简化薪资渲染（K格式）
-export const renderSalaryK = (params: any) => {
-  const { val } = params;
-  const color =
-    val >= 20000
+    numVal >= 20000
       ? colors.success
-      : val >= 15000
+      : numVal >= 15000
       ? colors.warning
       : colors.error;
 
   return (
     <View style={styles.salaryContainer}>
       <Text style={[styles.salaryText, { color }]}>
-        ¥{(val / 1000).toFixed(0)}K
+        ¥{numVal?.toLocaleString()}
       </Text>
     </View>
   );
 };
 
-// 状态徽章渲染
+export const renderSalaryK = ({ val }: ITableColumnParams) => {
+  const numVal = val as unknown as number;
+  const color =
+    numVal >= 20000
+      ? colors.success
+      : numVal >= 15000
+      ? colors.warning
+      : colors.error;
+
+  return (
+    <View style={styles.salaryContainer}>
+      <Text style={[styles.salaryText, { color }]}>
+        ¥{(numVal / 1000).toFixed(0)}K
+      </Text>
+    </View>
+  );
+};
+
 export const renderStatusBadge = (
-  params: any,
+  { val }: ITableColumnParams,
   statusConfig?: Record<string, { color: string; text?: string }>
 ) => {
-  const { val } = params;
-  const defaultConfig = {
+  const defaultConfig: Record<string, { color: string; text?: string }> = {
     在职: { color: colors.success },
     试用期: { color: colors.warning },
     离职: { color: colors.error },
@@ -55,33 +52,32 @@ export const renderStatusBadge = (
     busy: { color: colors.warning, text: '忙碌' },
   };
 
-  const config: any = statusConfig || defaultConfig;
-  const statusInfo = config[val] || { color: colors.textLight };
+  const config = statusConfig ?? defaultConfig;
+  const statusInfo = config[val as string] ?? { color: colors.textLight };
 
   return (
     <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
-      <Text style={styles.statusText}>{statusInfo.text || val}</Text>
+      <Text style={styles.statusText}>
+        {statusInfo.text ?? (val as string)}
+      </Text>
     </View>
   );
 };
 
-// 分数渲染（带颜色）
-export const renderScore = (params: any) => {
-  const { val } = params;
-  let color = colors.success; // 优秀
-  if (val < 60) color = colors.error; // 不及格
-  else if (val < 80) color = colors.warning; // 良好
+export const renderScore = ({ val }: ITableColumnParams) => {
+  const numVal = val as unknown as number;
+  const color =
+    numVal < 60 ? colors.error : numVal < 80 ? colors.warning : colors.success;
 
   return (
     <View style={styles.scoreContainer}>
-      <Text style={[styles.scoreText, { color }]}>{val}</Text>
+      <Text style={[styles.scoreText, { color }]}>{numVal}</Text>
     </View>
   );
 };
 
-// 进度条渲染
-export const renderProgress = (params: any) => {
-  const { val } = params;
+export const renderProgress = ({ val }: ITableColumnParams) => {
+  const numVal = val as unknown as number;
   return (
     <View style={styles.progressContainer}>
       <View style={styles.progressBar}>
@@ -89,24 +85,23 @@ export const renderProgress = (params: any) => {
           style={[
             styles.progressFill,
             {
-              width: `${val}%`,
-              backgroundColor: val === 100 ? colors.success : colors.primary,
+              width: `${numVal}%`,
+              backgroundColor: numVal === 100 ? colors.success : colors.primary,
             },
           ]}
         />
       </View>
-      <Text style={styles.progressText}>{val}%</Text>
+      <Text style={styles.progressText}>{numVal}%</Text>
     </View>
   );
 };
 
-// 优先级渲染
 export const renderPriority = (
-  params: any,
+  { val, row }: ITableColumnParams,
   onPress?: (id: any, priority: string) => void
 ) => {
-  const { val, row } = params;
-  const priorityConfig = {
+  const strVal = val as string;
+  const priorityConfig: Record<string, { color: string; text: string }> = {
     high: { color: colors.error, text: '高' },
     medium: { color: colors.warning, text: '中' },
     low: { color: colors.success, text: '低' },
@@ -114,7 +109,10 @@ export const renderPriority = (
     中: { color: colors.warning, text: '中' },
     低: { color: colors.success, text: '低' },
   };
-  const config = priorityConfig[val as keyof typeof priorityConfig];
+  const config = priorityConfig[strVal] ?? {
+    color: colors.textLight,
+    text: strVal,
+  };
 
   const content = (
     <View style={styles.priorityContainer}>
@@ -127,7 +125,7 @@ export const renderPriority = (
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={() => onPress(row.id, val)}>
+      <TouchableOpacity onPress={() => onPress(row.id, strVal)}>
         {content}
       </TouchableOpacity>
     );
@@ -136,56 +134,49 @@ export const renderPriority = (
   return content;
 };
 
-// 操作按钮组渲染
 export const renderActionButtons = (
-  params: any,
+  { row }: ITableColumnParams,
   actions: Array<{
     text: string;
     onPress: (row: any) => void;
     style?: any;
     textStyle?: any;
   }>
-) => {
-  const { row } = params;
+) => (
+  <View style={styles.actionsContainer}>
+    {actions.map((action, index) => (
+      <TouchableOpacity
+        key={index}
+        style={[styles.actionButton, action.style]}
+        onPress={() => action.onPress(row)}
+      >
+        <Text style={[styles.actionButtonText, action.textStyle]}>
+          {action.text}
+        </Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+);
 
-  return (
-    <View style={styles.actionsContainer}>
-      {actions.map((action, index) => (
-        <TouchableOpacity
-          key={index}
-          style={[styles.actionButton, action.style]}
-          onPress={() => action.onPress(row)}
-        >
-          <Text style={[styles.actionButtonText, action.textStyle]}>
-            {action.text}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
-
-// 标签列表渲染
-export const renderTags = (params: any, maxShow = 2) => {
-  const { val } = params;
+export const renderTags = ({ val }: ITableColumnParams, maxShow = 2) => {
   if (!Array.isArray(val)) return null;
+  const tags = val as string[];
 
   return (
     <View style={styles.tagsContainer}>
-      {val.slice(0, maxShow).map((tag: string, index: number) => (
+      {tags.slice(0, maxShow).map((tag, index) => (
         <View key={index} style={styles.tag}>
           <Text style={styles.tagText}>{tag}</Text>
         </View>
       ))}
-      {val.length > maxShow && (
-        <Text style={styles.moreTagsText}>+{val.length - maxShow}</Text>
+      {tags.length > maxShow && (
+        <Text style={styles.moreTagsText}>+{tags.length - maxShow}</Text>
       )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  // 薪资样式
   salaryContainer: {
     alignItems: 'flex-end',
     paddingRight: 8,
@@ -195,7 +186,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // 状态徽章样式
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -208,7 +198,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // 分数样式
   scoreContainer: {
     alignItems: 'center',
   },
@@ -217,7 +206,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // 进度条样式
   progressContainer: {
     alignItems: 'center',
     paddingHorizontal: 8,
@@ -239,7 +227,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // 优先级样式
   priorityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -257,7 +244,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // 操作按钮样式
   actionsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -275,7 +261,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // 标签样式
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

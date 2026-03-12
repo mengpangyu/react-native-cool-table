@@ -1,40 +1,41 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { ITableColumn } from 'react-native-cool-table';
 import DemoLayout from '../components/DemoLayout';
 import TableContainer from '../components/TableContainer';
 import { generateBasicUsers } from '../utils/dataUtils';
 
 const BasicTableDemo: React.FC = () => {
-  // 使用工具函数生成数据
-  const data = generateBasicUsers(5);
+  const data = useMemo(() => generateBasicUsers(5), []);
 
-  // 基础列配置
-  const columns: ITableColumn[] = [
-    {
-      key: 'name',
-      title: '姓名',
-      width: 80,
-      align: 'left',
-    },
-    {
-      key: 'age',
-      title: '年龄',
-      width: 60,
-      align: 'center',
-    },
-    {
-      key: 'city',
-      title: '城市',
-      width: 80,
-      align: 'center',
-    },
-    {
-      key: 'score',
-      title: '分数',
-      width: 60,
-      align: 'right',
-    },
-  ];
+  const columns: ITableColumn[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        title: '姓名',
+        width: 80,
+        align: 'left',
+      },
+      {
+        key: 'age',
+        title: '年龄',
+        width: 60,
+        align: 'center',
+      },
+      {
+        key: 'city',
+        title: '城市',
+        width: 80,
+        align: 'center',
+      },
+      {
+        key: 'score',
+        title: '分数',
+        width: 60,
+        align: 'right',
+      },
+    ],
+    []
+  );
 
   const features = [
     '简洁的数据展示',

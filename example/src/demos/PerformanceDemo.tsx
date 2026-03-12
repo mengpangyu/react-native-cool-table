@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import type { ITableColumn } from 'react-native-cool-table';
 import DemoLayout from '../components/DemoLayout';
@@ -10,25 +16,19 @@ import { colors, commonStyles } from '../styles/commonStyles';
 const PerformanceDemo: React.FC = () => {
   const [dataSize, setDataSize] = useState(100);
   const [renderTime, setRenderTime] = useState<number | null>(null);
+  const startTimeRef = useRef<number>(0);
 
-  // 使用 useMemo 优化数据生成
   const data = useMemo(() => {
-    const startTime = Date.now();
-    const generatedData = generateEmployees(dataSize);
-    const endTime = Date.now();
-    setRenderTime(endTime - startTime);
-    return generatedData;
+    startTimeRef.current = Date.now();
+    return generateEmployees(dataSize);
   }, [dataSize]);
 
-  // 处理数据量变更
+  useEffect(() => {
+    setRenderTime(Date.now() - startTimeRef.current);
+  }, [data]);
+
   const handleDataSizeChange = useCallback((size: number) => {
-    const startTime = Date.now();
     setDataSize(size);
-    // 使用 setTimeout 来测量渲染时间
-    setTimeout(() => {
-      const endTime = Date.now();
-      setRenderTime(endTime - startTime);
-    }, 100);
   }, []);
 
   // 处理行点击

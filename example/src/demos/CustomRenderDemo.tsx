@@ -15,13 +15,6 @@ const CustomRenderDemo: React.FC = () => {
   // 使用工具函数生成用户数据
   const data = generateUserProfiles(4);
 
-  // 处理单元格点击
-  // const handleCellPress = useCallback((params: any) => {
-  //   Alert.alert('单元格点击', `点击了 ${params.col.title}: ${params.val}`, [
-  //     { text: '确定' },
-  //   ]);
-  // }, []);
-
   // 自定义头像渲染
   const renderAvatar = useCallback((params: any) => {
     const { row } = params;

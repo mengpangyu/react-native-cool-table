@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { ITableColumn } from 'react-native-cool-table';
 import DemoLayout from '../components/DemoLayout';
@@ -7,15 +7,13 @@ import { generateSalesData } from '../utils/dataUtils';
 import { colors } from '../styles/commonStyles';
 
 const FixedColumnDemo: React.FC = () => {
-  // 使用工具函数生成销售数据
-  const data = generateSalesData(5);
+  const data = useMemo(() => generateSalesData(5), []);
 
-  // 自定义销售额渲染
-  const renderSales = (params: any) => {
+  const renderSales = useCallback((params: any) => {
     const { val } = params;
-    let color = colors.success; // 绿色 - 高销售额
-    if (val < 15000) color = colors.warning; // 橙色 - 中等
-    if (val < 10000) color = colors.error; // 红色 - 低销售额
+    let color = colors.success;
+    if (val < 15000) color = colors.warning;
+    if (val < 10000) color = colors.error;
 
     return (
       <View style={styles.salesContainer}>
@@ -24,111 +22,113 @@ const FixedColumnDemo: React.FC = () => {
         </Text>
       </View>
     );
-  };
+  }, []);
 
-  // 列配置 - 前两列固定
-  const columns: ITableColumn[] = [
-    {
-      key: 'name',
-      title: '姓名',
-      width: 80,
-      fixed: true,
-      align: 'left',
-      textStyle: { fontWeight: 'bold' },
-    },
-    {
-      key: 'department',
-      title: '区域',
-      width: 80,
-      fixed: true,
-      align: 'center',
-      textStyle: { fontWeight: '500' },
-    },
-    {
-      key: 'jan',
-      title: '1月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'feb',
-      title: '2月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'mar',
-      title: '3月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'apr',
-      title: '4月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'may',
-      title: '5月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'jun',
-      title: '6月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'jul',
-      title: '7月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'aug',
-      title: '8月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'sep',
-      title: '9月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'oct',
-      title: '10月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'nov',
-      title: '11月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-    {
-      key: 'dec',
-      title: '12月',
-      width: 70,
-      align: 'right',
-      render: renderSales,
-    },
-  ];
+  const columns: ITableColumn[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        title: '姓名',
+        width: 80,
+        fixed: true,
+        align: 'left',
+        textStyle: { fontWeight: 'bold' },
+      },
+      {
+        key: 'department',
+        title: '区域',
+        width: 80,
+        fixed: true,
+        align: 'center',
+        textStyle: { fontWeight: '500' },
+      },
+      {
+        key: 'jan',
+        title: '1月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'feb',
+        title: '2月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'mar',
+        title: '3月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'apr',
+        title: '4月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'may',
+        title: '5月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'jun',
+        title: '6月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'jul',
+        title: '7月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'aug',
+        title: '8月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'sep',
+        title: '9月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'oct',
+        title: '10月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'nov',
+        title: '11月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+      {
+        key: 'dec',
+        title: '12月',
+        width: 70,
+        align: 'right',
+        render: renderSales,
+      },
+    ],
+    [renderSales]
+  );
 
   const features = [
     '左侧列固定不滚动',
@@ -139,7 +139,6 @@ const FixedColumnDemo: React.FC = () => {
     '适合展示宽表格数据',
   ];
 
-  // 销售额颜色说明组件
   const legend = (
     <View style={styles.legend}>
       <Text style={styles.legendTitle}>销售额颜色说明：</Text>

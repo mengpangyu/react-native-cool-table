@@ -32,8 +32,8 @@ const DemoLayout: React.FC<DemoLayoutProps> = ({
       {features && features.length > 0 && (
         <View style={commonStyles.features}>
           <Text style={commonStyles.featuresTitle}>功能特点：</Text>
-          {features.map((feature, index) => (
-            <Text key={index} style={commonStyles.featureItem}>
+          {features.map((feature) => (
+            <Text key={feature} style={commonStyles.featureItem}>
               • {feature}
             </Text>
           ))}
