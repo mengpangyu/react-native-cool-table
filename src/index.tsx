@@ -10,8 +10,12 @@ export type {
   ITableColumnParams,
   ITableRowProps,
   TSortType,
+  TSortState,
   ITableSortProps,
+  ITableStaticContextValue,
+  ITableStateContextValue,
 } from './types/index';
+export { useTableStatic, useTableState } from './context';
 import { SORT_STATUS_MAP } from './constant';
 
 const TableTemp: any = MainTable;

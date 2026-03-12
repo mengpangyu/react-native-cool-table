@@ -1,34 +1,23 @@
-import { isArray, isEmpty, isFunction, isNil } from 'lodash';
-import React, {
-  forwardRef,
-  memo,
-  useCallback,
-  useImperativeHandle,
-  useMemo,
-  useState,
-} from 'react';
+import { isArray, isFunction, isNil } from 'lodash';
+import React, { memo, useCallback, useMemo } from 'react';
 import { Text, View, TouchableOpacity } from 'react-native';
 import type { ITableCellProps } from '../../types';
 import { SORT_STATUS_MAP } from '../../constant';
 import Sort from '../Sort';
-import { useUpdateEffect } from '../../hooks';
 import styles from './styles';
+import { useTableState } from '../../context';
 
-const Cell = (
-  {
-    val,
-    col,
-    row,
-    rowIndex,
-    colIndex,
-    onSortChange,
-    isHeader,
-    onExpandChange,
-    expanded,
-    style,
-  }: ITableCellProps,
-  ref: any
-) => {
+const Cell = ({
+  val,
+  col,
+  row,
+  rowIndex,
+  colIndex,
+  isHeader,
+  onExpandChange,
+  expanded,
+  style,
+}: ITableCellProps) => {
   const {
     key,
     fixed,
@@ -36,97 +25,95 @@ const Cell = (
     textStyle,
     secondTextStyle,
     sortable,
-    defaultSort,
     showArrow,
     touchStyle,
     onPress,
   } = col;
 
-  const [sortStatus, setSortStatus] = useState(defaultSort);
+  const { sortState, setSortState } = useTableState();
+
   const isShowSort = useMemo(() => isHeader && sortable, [isHeader, sortable]);
   const isShowExpand = useMemo(
-    () => !isEmpty(row.children) && !isHeader && colIndex === 0,
-    [row, isHeader, colIndex]
+    () => !!row.children?.length && !isHeader && colIndex === 0,
+    [row.children, isHeader, colIndex]
   );
-  const isShowArrow = useMemo(() => {
-    return !isHeader && showArrow && !isShowExpand;
-  }, [isHeader, showArrow, isShowExpand]);
+  const isShowArrow = useMemo(
+    () => !isHeader && !!showArrow && !isShowExpand,
+    [isHeader, showArrow, isShowExpand]
+  );
 
-  useImperativeHandle(ref, () => ({ resetSort }));
+  const currentSort = useMemo(() => {
+    if (!isShowSort) return undefined;
+    return sortState?.columnKey === key ? sortState.sort : undefined;
+  }, [isShowSort, sortState, key]);
 
-  useUpdateEffect(() => {
-    if (isShowSort && isFunction(onSortChange) && sortStatus) {
-      onSortChange({ colIndex, sort: sortStatus, key: col?.key ?? '' });
-    }
-  }, [sortStatus, isShowSort, onSortChange, colIndex, col]);
-
-  const resetSort = useCallback(() => setSortStatus(undefined), []);
-
-  const _onPress = () => {
+  const _onPress = useCallback(() => {
     if (isShowSort) {
-      setSortStatus(
-        sortStatus !== SORT_STATUS_MAP.asc
+      const nextSort =
+        currentSort !== SORT_STATUS_MAP.asc
           ? SORT_STATUS_MAP.asc
-          : SORT_STATUS_MAP.desc
-      );
-    } else if (isShowExpand) {
-      onExpandChange?.();
-    } else if (isFunction(onPress)) {
-      // 最后响应外部的 onPress
-      onPress({
-        val,
-        col,
-        row,
-        rowIndex,
-        colIndex,
-        isHeader,
-      });
+          : SORT_STATUS_MAP.desc;
+      setSortState({ columnKey: key, sort: nextSort });
+      return;
     }
-  };
+    if (isShowExpand) {
+      onExpandChange?.();
+      return;
+    }
+    if (isFunction(onPress)) {
+      onPress({ val, col, row, rowIndex, colIndex, isHeader });
+    }
+  }, [
+    isShowSort,
+    isShowExpand,
+    currentSort,
+    key,
+    setSortState,
+    onExpandChange,
+    onPress,
+    val,
+    col,
+    row,
+    rowIndex,
+    colIndex,
+    isHeader,
+  ]);
 
   const renderCell = () => {
-    if (!isNil(val)) {
-      const vals = isArray(val) ? val : [val];
-      return vals.map((item, index) => {
-        return (
-          <Text
-            key={`table-cell-${key}-${item}-${index}`}
-            numberOfLines={2}
-            style={[
-              styles.text,
-              {
-                textAlign: fixed ? 'left' : 'right',
-                color: isHeader ? '#929AA6' : '#1F2733',
-              },
-              isHeader ? hTextStyle : textStyle,
-              index >= 1 && styles.second_text,
-              index >= 1 && secondTextStyle,
-            ]}
-          >
-            {item}
-          </Text>
-        );
-      });
-    }
-    return null;
+    if (isNil(val)) return null;
+    const vals = isArray(val) ? val : [val];
+    return vals.map((item, index) => (
+      <Text
+        key={`table-cell-${key}-${item}-${index}`}
+        numberOfLines={2}
+        style={[
+          styles.text,
+          {
+            textAlign: fixed ? 'left' : 'right',
+            color: isHeader ? '#929AA6' : '#1F2733',
+          },
+          isHeader ? hTextStyle : textStyle,
+          index >= 1 && styles.second_text,
+          index >= 1 && secondTextStyle,
+        ]}
+      >
+        {item}
+      </Text>
+    ));
   };
 
-  const renderArrow = () => {
-    return isShowArrow ? (
+  const renderArrow = () =>
+    isShowArrow ? (
       <View style={styles.rightArrow}>
         <View style={styles.rightArrowTriangle} />
       </View>
     ) : null;
-  };
 
-  const renderSort = () => {
-    return isShowSort ? (
-      <Sort style={styles.sort} sortStatus={sortStatus} />
-    ) : null;
-  };
+  const renderSort = () =>
+    isShowSort ? <Sort style={styles.sort} sortStatus={currentSort} /> : null;
 
-  const renderExpand = () => {
-    return isShowExpand ? (
+  const renderExpand = () =>
+    isShowExpand ? (
       <View
         style={[
           styles.expand_icon,
@@ -136,7 +123,7 @@ const Cell = (
         <View style={styles.expandTriangle} />
       </View>
     ) : null;
-  };
+
   return (
     <TouchableOpacity
       style={[styles.content, style, touchStyle]}
@@ -151,4 +138,4 @@ const Cell = (
   );
 };
 
-export default memo(forwardRef(Cell));
+export default memo(Cell);

@@ -14,6 +14,11 @@ export type TItem = { [key: string]: any; children?: TItem[] };
 
 export type TSortType = 'asc' | 'desc';
 
+export type TSortState = {
+  columnKey: string;
+  sort: TSortType;
+} | null;
+
 export interface IEmptyProps {
   description?: string;
   style?: StyleProp<ViewStyle>;
@@ -49,7 +54,6 @@ export type TExpandable = {
   renderItem?: (params: {
     item: TAnyObject;
     index: number;
-    positionX: Animated.Value;
     columns: ITableColumn[];
     depth: number;
     defaultRender: (params: { item: TItem; index: number }) => ReactNode;
@@ -58,7 +62,6 @@ export type TExpandable = {
     data: TItem[];
     parentData: TItem;
     index: number;
-    positionX: Animated.Value;
     columns: ITableColumn[];
     depth: number;
   }) => ReactNode;
@@ -118,17 +121,17 @@ export interface ITableProps extends ICommonTableProps {
   treeConfig?: TExpandable;
   onLayout?: (e: LayoutChangeEvent) => void;
   keyExtractor?: (item: TItem, index: number) => string;
+  rowKey?: string | ((item: TItem, index: number) => string);
 }
 
-export interface ITableRowProps extends ICommonTableProps {
-  columns: ITableColumn[];
+export interface ITableRowProps {
   data: TItem;
   rowIndex: number;
-  positionX: Animated.Value;
+  rowKeyValue: string;
   isHeader?: boolean;
-  treeConfig?: TExpandable;
   depth?: number;
-  onExpandChange?: (expanded: boolean, rowIndex: number) => void;
+  style?: StyleProp<ViewStyle>;
+  onPressRow?: (params: { item: any; rowIndex: number }) => void;
 }
 
 export interface ITableSortProps {
@@ -136,6 +139,26 @@ export interface ITableSortProps {
   style?: StyleProp<ViewStyle>;
   ascIconProps?: IIconProps;
   descIconProps?: IIconProps;
+}
+
+export interface ITableStaticContextValue {
+  columns: ITableColumn[];
+  positionX: Animated.Value;
+  treeConfig?: TExpandable;
+  rowStyle?: StyleProp<ViewStyle>;
+  onSortChange?: (params: {
+    key: string;
+    colIndex: number;
+    sort: TSortType;
+  }) => void;
+}
+
+export interface ITableStateContextValue {
+  sortState: TSortState;
+  setSortState: (next: TSortState) => void;
+  expandedKeys: Set<string>;
+  toggleExpand: (key: string) => void;
+  isExpanded: (key: string) => boolean;
 }
 
 export type ITableComponentType = ((

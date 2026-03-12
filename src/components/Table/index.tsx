@@ -7,7 +7,6 @@ import React, {
   useState,
   useMemo,
   useEffect,
-  useRef,
   useCallback,
 } from 'react';
 import {
@@ -21,13 +20,36 @@ import {
 
 import styles from './styles';
 import Empty from '../Empty';
-import type { ITableProps, TItem, ITableColumn } from '../../types';
+import type {
+  ITableProps,
+  TItem,
+  ITableColumn,
+  TSortState,
+  ITableStaticContextValue,
+  ITableStateContextValue,
+} from '../../types';
 import { isFunction } from 'lodash';
 import Row from '../Row';
+import { TableStaticContext, TableStateContext } from '../../context';
 
 if (Platform.OS === 'android') {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const buildRowKey = (
+  rowKeyProp: ITableProps['rowKey'],
+  item: TItem,
+  index: number
+): string => {
+  if (typeof rowKeyProp === 'function') {
+    return rowKeyProp(item, index);
+  }
+  if (typeof rowKeyProp === 'string') {
+    const v = item[rowKeyProp];
+    return v !== undefined && v !== null ? String(v) : String(index);
+  }
+  return String(index);
+};
 
 const Table = (
   {
@@ -46,27 +68,80 @@ const Table = (
     treeConfig,
     EmptyComponent,
     keyExtractor,
+    rowKey,
   }: ITableProps,
   _ref: any
 ) => {
   const [_columns, setColumns] = useState<ITableColumn[]>(columns);
-  const rowRefs = useRef<any[]>([]);
   const [contentWidth, setContentWidth] = useState(0);
   const [positionX] = useState(new Animated.Value(0));
 
-  useEffect(() => {
-    if (rowRefs.current.length > data.length) {
-      rowRefs.current = rowRefs.current.slice(0, data.length);
-    }
-  }, [data.length]);
+  const [sortState, setSortState] = useState<TSortState>(null);
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
 
-  const headerData = useMemo(() => {
-    const titleData: any = {};
-    _columns.forEach((column) => {
-      titleData[column.key] = column.title;
+  useEffect(() => {
+    setColumns(() => {
+      const fixed = columns.filter((c) => c.fixed);
+      const normal = columns.filter((c) => !c.fixed);
+      return [...fixed, ...normal];
     });
-    return titleData;
-  }, [_columns]);
+  }, [columns]);
+
+  useEffect(() => {
+    if (sortState) {
+      const colIndex = _columns.findIndex((c) => c.key === sortState.columnKey);
+      onSortChange?.({
+        key: sortState.columnKey,
+        colIndex,
+        sort: sortState.sort,
+      });
+    }
+  }, [sortState, _columns, onSortChange]);
+
+  const toggleExpand = useCallback(
+    (key: string) => {
+      setExpandedKeys((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+          return next;
+        }
+        if (treeConfig?.autoCollapseOthers) {
+          next.clear();
+        }
+        next.add(key);
+        return next;
+      });
+    },
+    [treeConfig?.autoCollapseOthers]
+  );
+
+  const isExpanded = useCallback(
+    (key: string) => expandedKeys.has(key),
+    [expandedKeys]
+  );
+
+  const staticValue = useMemo<ITableStaticContextValue>(
+    () => ({
+      columns: _columns,
+      positionX,
+      treeConfig,
+      rowStyle,
+      onSortChange,
+    }),
+    [_columns, positionX, treeConfig, rowStyle, onSortChange]
+  );
+
+  const stateValue = useMemo<ITableStateContextValue>(
+    () => ({
+      sortState,
+      setSortState,
+      expandedKeys,
+      toggleExpand,
+      isExpanded,
+    }),
+    [sortState, expandedKeys, toggleExpand, isExpanded]
+  );
 
   const onScroll = useMemo(
     () =>
@@ -76,94 +151,68 @@ const Table = (
     [positionX]
   );
 
-  useEffect(() => {
-    const fixedColumns = columns.filter((column) => column.fixed) ?? [];
-    const normalColumns = columns.filter((column) => !column.fixed) ?? [];
-    setColumns([...fixedColumns, ...normalColumns]);
-  }, [columns]);
-
   const _onLayout = useCallback(
     (e: LayoutChangeEvent) => {
-      const { width } = e.nativeEvent.layout;
-      setContentWidth(width);
+      setContentWidth(e.nativeEvent.layout.width);
       onLayout?.(e);
     },
     [onLayout]
   );
 
-  const onExpandChange = useCallback(
-    (expanded: boolean, rowIndex: number) => {
-      if (treeConfig?.autoCollapseOthers && expanded) {
-        rowRefs.current?.forEach((rowRef, index) => {
-          if (rowIndex !== index) {
-            rowRef?.collapse();
-          }
-        });
-      }
-    },
-    [treeConfig]
-  );
+  const headerData = useMemo(() => {
+    const obj: Record<string, string> = {};
+    _columns.forEach((c) => {
+      obj[c.key] = c.title;
+    });
+    return obj;
+  }, [_columns]);
 
   const getListKey = useCallback(
     (item: TItem, index: number) => {
-      if (keyExtractor) {
-        return keyExtractor(item, index);
-      }
-      return String(index);
+      if (keyExtractor) return keyExtractor(item, index);
+      return buildRowKey(rowKey, item, index);
     },
-    [keyExtractor]
+    [keyExtractor, rowKey]
   );
 
   const renderItem = useCallback(
     ({ item, index }: { item: TItem; index: number }) => (
       <Row
-        key={`table-row-${index}`}
-        style={rowStyle}
-        onPressRow={onPressRow}
         data={item}
         rowIndex={index}
-        columns={_columns}
-        positionX={positionX}
-        treeConfig={treeConfig}
-        ref={(rowRef: any) => (rowRefs.current[index] = rowRef)}
-        onExpandChange={onExpandChange}
+        rowKeyValue={buildRowKey(rowKey, item, index)}
+        onPressRow={onPressRow}
       />
     ),
-    [rowStyle, onPressRow, _columns, positionX, treeConfig, onExpandChange]
+    [rowKey, onPressRow]
   );
 
   const renderHeader = useCallback(
     () => (
       <Row
-        onSortChange={onSortChange}
-        style={headerRowStyle}
-        isHeader={true}
         data={headerData}
-        columns={_columns}
-        positionX={positionX}
         rowIndex={-1}
+        rowKeyValue="__header__"
+        isHeader
+        style={headerRowStyle}
       />
     ),
-    [onSortChange, headerRowStyle, headerData, _columns, positionX]
+    [headerData, headerRowStyle]
   );
 
   const renderFooter = useCallback(() => {
-    if (FooterComponent) {
-      return (
-        <Animated.View
-          style={[
-            { width: contentWidth, transform: [{ translateX: positionX }] },
-          ]}
-        >
-          {isValidElement(FooterComponent) ? (
-            FooterComponent
-          ) : isFunction(FooterComponent) ? (
-            <FooterComponent />
-          ) : null}
-        </Animated.View>
-      );
-    }
-    return null;
+    if (!FooterComponent) return null;
+    return (
+      <Animated.View
+        style={{ width: contentWidth, transform: [{ translateX: positionX }] }}
+      >
+        {isValidElement(FooterComponent) ? (
+          FooterComponent
+        ) : isFunction(FooterComponent) ? (
+          <FooterComponent />
+        ) : null}
+      </Animated.View>
+    );
   }, [FooterComponent, contentWidth, positionX]);
 
   const renderEmpty = useCallback(
@@ -198,34 +247,38 @@ const Table = (
   );
 
   return (
-    <View style={[styles.content, style]} onLayout={_onLayout}>
-      <Animated.ScrollView
-        horizontal={true}
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        nestedScrollEnabled
-        onScroll={onScroll}
-      >
-        <View>
-          {data?.length ? (
-            <FlatList
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={getListKey}
-              stickyHeaderIndices={[0]}
-              initialNumToRender={25}
-              ListHeaderComponent={renderHeader}
-              ListFooterComponent={renderFooter}
-              {...flatListProps}
-              data={data}
-              renderItem={renderItem}
-            />
-          ) : (
-            renderEmpty()
-          )}
+    <TableStaticContext.Provider value={staticValue}>
+      <TableStateContext.Provider value={stateValue}>
+        <View style={[styles.content, style]} onLayout={_onLayout}>
+          <Animated.ScrollView
+            horizontal
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            nestedScrollEnabled
+            onScroll={onScroll}
+          >
+            <View>
+              {data?.length ? (
+                <FlatList
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={getListKey}
+                  stickyHeaderIndices={[0]}
+                  initialNumToRender={25}
+                  ListHeaderComponent={renderHeader}
+                  ListFooterComponent={renderFooter}
+                  {...flatListProps}
+                  data={data}
+                  renderItem={renderItem}
+                />
+              ) : (
+                renderEmpty()
+              )}
+            </View>
+          </Animated.ScrollView>
         </View>
-      </Animated.ScrollView>
-    </View>
+      </TableStateContext.Provider>
+    </TableStaticContext.Provider>
   );
 };
 

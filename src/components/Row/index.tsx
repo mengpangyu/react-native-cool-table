@@ -1,13 +1,4 @@
-import React, {
-  forwardRef,
-  memo,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { forwardRef, memo, useCallback, useMemo } from 'react';
 import {
   Animated,
   View,
@@ -16,255 +7,219 @@ import {
   LayoutAnimation,
   ScrollView,
 } from 'react-native';
-import type { ITableRowProps, TItem, TSortType } from '../../types';
-import { isArray, isEmpty, isFunction, isNil } from 'lodash';
+import type { ITableRowProps, TItem } from '../../types';
+import { isArray, isEmpty, isFunction } from 'lodash';
 import { ALIGN_MAP } from '../../constant';
 import Cell from '../Cell';
-import { useUpdateEffect } from '../../hooks';
 import styles from './styles';
+import { useTableStatic, useTableState } from '../../context';
 
 const Row = (
   {
     style,
-    columns,
     data,
     rowIndex,
     isHeader,
-    positionX,
-    onSortChange,
-    treeConfig,
-    onPressRow,
-    rowStyle,
     depth = 1,
-    onExpandChange,
+    rowKeyValue,
+    onPressRow,
   }: ITableRowProps,
-  ref: any
+  _ref: any
 ) => {
-  const cellRefs = useRef<any[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const { columns, positionX, treeConfig, rowStyle } = useTableStatic();
+  const { isExpanded, toggleExpand } = useTableState();
 
-  useEffect(() => {
-    if (cellRefs.current.length > columns.length) {
-      cellRefs.current = cellRefs.current.slice(0, columns.length);
-    }
-  }, [columns.length]);
+  const expanded = isExpanded(rowKeyValue);
+
+  const effectiveStyle = style ?? rowStyle;
+
   const nextExpandable = useMemo(() => {
     return !isEmpty(data?.children) && treeConfig ? treeConfig : undefined;
   }, [treeConfig, data?.children]);
+
   const hasHeaderMultipleLine = useMemo(() => {
     return isHeader && Object.keys(data).some((item) => item.includes('/'));
   }, [isHeader, data]);
-
-  // NOTE: 嵌套的Row会导致此Hooks报错，在功能上也不需要嵌套多层的ref，所以只在第一层级使用Ref
-  useImperativeHandle(depth === 1 ? ref : undefined, () => ({
-    collapse: () => _onExpandChange(false),
-  }));
-
-  useUpdateEffect(() => {
-    onExpandChange?.(expanded, rowIndex);
-  }, [expanded, onExpandChange, rowIndex]);
 
   const _onPressRow = useCallback(() => {
     onPressRow?.({ item: data, rowIndex });
   }, [onPressRow, data, rowIndex]);
 
-  const _onExpandChange = useCallback(
-    (status?: boolean) => {
-      if (isNil(status)) {
-        setExpanded((prev) => !prev);
-      } else {
-        setExpanded(status);
-      }
-      // 折叠触发layout动画
-      LayoutAnimation.configureNext(
-        LayoutAnimation.create(
-          treeConfig?.animationDuration ?? 200,
-          LayoutAnimation.Types.easeInEaseOut,
-          LayoutAnimation.Properties.opacity
-        )
-      );
-    },
-    [treeConfig]
-  );
+  const _onExpandChange = useCallback(() => {
+    LayoutAnimation.configureNext(
+      LayoutAnimation.create(
+        treeConfig?.animationDuration ?? 200,
+        LayoutAnimation.Types.easeInEaseOut,
+        LayoutAnimation.Properties.opacity
+      )
+    );
+    toggleExpand(rowKeyValue);
+  }, [treeConfig?.animationDuration, toggleExpand, rowKeyValue]);
 
-  const _onSortChange = useCallback(
-    ({
-      key,
-      colIndex,
-      sort,
-    }: {
-      key: string;
-      colIndex: number;
-      sort: TSortType;
-    }) => {
-      if (!isEmpty(cellRefs.current)) {
-        cellRefs.current.forEach((item, index) => {
-          if (index !== colIndex) {
-            item?.resetSort?.();
-          }
-        });
-      }
-      onSortChange?.({
-        key,
+  const renderColumns = useCallback(() => {
+    if (!isArray(columns) || isEmpty(columns)) return null;
+
+    return columns.map((column, colIndex, arr) => {
+      const {
+        key = '',
+        keySplitSymbol = '/',
+        width,
+        align = 'right',
+        render,
+        renderHeader,
+        style: cStyle,
+        hStyle,
+        fixed,
+        customVal,
+      } = column;
+
+      const commonParams = {
+        col: column,
+        row: data,
+        rowIndex,
         colIndex,
-        sort,
-      });
-    },
-    [onSortChange, cellRefs]
-  );
+        isHeader,
+      };
 
-  const renderColumns = () => {
-    if (isArray(columns) && !isEmpty(columns)) {
-      return columns.map((column, colIndex, arr) => {
-        const {
-          key = '',
-          keySplitSymbol = '/',
-          width,
-          align = 'right',
-          render,
-          renderHeader,
-          style: cStyle,
-          hStyle,
-          fixed,
-          customVal,
-        } = column;
+      const isFirst = colIndex === 0;
+      const isLast = colIndex === arr.length - 1;
+      const cellStyle = isHeader ? hStyle : cStyle;
 
-        const commonParams = {
-          col: column,
-          row: data,
-          rowIndex,
-          colIndex,
-          isHeader,
-        };
+      const keys = isHeader ? [key] : key.split(keySplitSymbol);
+      const values = keys.map((k: string) => data[k as keyof typeof data]);
+      let value = values.length <= 1 ? values?.[0] : values;
 
-        const isFirst = colIndex === 0;
-        const isLast = colIndex === arr.length - 1;
+      if (isFunction(customVal)) {
+        value = customVal({ val: value, ...commonParams });
+      }
 
-        const cellStyle = isHeader ? hStyle : cStyle;
+      const alignRes = ALIGN_MAP[fixed || isFirst ? 'left' : align];
 
-        const keys = isHeader ? [key] : key.split(keySplitSymbol);
-        const values = keys.map((item) => data[item as keyof typeof data]);
-        let value = values.length <= 1 ? values?.[0] : values;
+      const _cellStyle: ViewStyle[] = [
+        styles.cell,
+        hasHeaderMultipleLine
+          ? styles.cell_multiple_line
+          : styles.justify_center,
+        { paddingLeft: isFirst ? 0 : 16, paddingRight: isLast ? 0 : 16 },
+      ];
+      if (width) _cellStyle.push({ width });
+      if (alignRes) _cellStyle.push({ alignItems: alignRes });
 
-        if (isFunction(customVal)) {
-          value = customVal({ val: value, ...commonParams });
-        }
+      const defaultRender = () => (
+        <Cell
+          val={value}
+          onExpandChange={_onExpandChange}
+          expanded={expanded}
+          style={
+            depth > 1 && colIndex === 0 ? { paddingLeft: 8 * (depth - 1) } : {}
+          }
+          {...commonParams}
+        />
+      );
 
-        const alignRes = ALIGN_MAP[fixed || isFirst ? 'left' : align];
+      const renderer = isHeader ? renderHeader : render;
+      const cell = isFunction(renderer)
+        ? renderer({ val: value, defaultRender, ...commonParams })
+        : defaultRender();
 
-        const _cellStyle: ViewStyle[] = [
-          styles.cell,
-          hasHeaderMultipleLine
-            ? styles.cell_multiple_line
-            : styles.justify_center,
-          { paddingLeft: isFirst ? 0 : 16, paddingRight: isLast ? 0 : 16 },
-        ];
-        if (width) {
-          _cellStyle.push({ width });
-        }
-        if (alignRes) {
-          _cellStyle.push({ alignItems: alignRes });
-        }
+      return fixed ? (
+        <Animated.View
+          key={`table-column-${rowIndex}-${colIndex}`}
+          style={[
+            styles.fixed_cell,
+            { transform: [{ translateX: positionX }] },
+            _cellStyle,
+            cellStyle,
+          ]}
+        >
+          {cell}
+        </Animated.View>
+      ) : (
+        <View
+          key={`table-column-${rowIndex}-${colIndex}`}
+          style={[_cellStyle, cellStyle]}
+        >
+          {cell}
+        </View>
+      );
+    });
+  }, [
+    columns,
+    data,
+    rowIndex,
+    isHeader,
+    depth,
+    hasHeaderMultipleLine,
+    positionX,
+    _onExpandChange,
+    expanded,
+  ]);
 
-        const defaultRender = () => {
-          return (
-            <Cell
-              ref={(cellRef) => (cellRefs.current[colIndex] = cellRef)}
-              val={value}
-              onSortChange={_onSortChange}
-              onExpandChange={_onExpandChange}
-              expanded={expanded}
-              style={
-                depth > 1 && colIndex === 0
-                  ? { paddingLeft: 8 * (depth - 1) }
-                  : {}
-              }
-              {...commonParams}
-            />
-          );
-        };
+  const renderSeparator = () =>
+    !isHeader ? <View style={styles.separator} /> : null;
 
-        const renderer = isHeader ? renderHeader : render;
-        const cell = isFunction(renderer)
-          ? renderer({ val: value, defaultRender, ...commonParams })
-          : defaultRender();
-
-        return fixed ? (
-          <Animated.View
-            key={`table-column-${rowIndex}-${colIndex}`}
-            style={[
-              styles.fixed_cell,
-              { transform: [{ translateX: positionX }] },
-              _cellStyle,
-              cellStyle,
-            ]}
-          >
-            {cell}
-          </Animated.View>
-        ) : (
-          <View
-            key={`table-column-${rowIndex}-${colIndex}`}
-            style={[_cellStyle, cellStyle]}
-          >
-            {cell}
-          </View>
-        );
-      });
-    }
-    return null;
-  };
-
-  const renderSeparator = () => {
-    return !isHeader ? <View style={styles.separator} /> : null;
-  };
-
-  const renderItem = ({ item, index }: { item: TItem; index: number }) => (
+  const renderChildRow = ({
+    item,
+    index,
+    parentKey,
+  }: {
+    item: TItem;
+    index: number;
+    parentKey: string;
+  }) => (
     <Row
-      key={`table-row-${JSON.stringify(item).slice(-1000)}-${index}`}
-      style={treeConfig?.rowStyle ?? rowStyle}
-      onPressRow={treeConfig?.onPressRow ?? onPressRow}
+      key={`${parentKey}-${index}`}
+      style={nextExpandable?.rowStyle ?? effectiveStyle}
+      onPressRow={nextExpandable?.onPressRow ?? onPressRow}
       data={item}
       rowIndex={index}
-      columns={columns}
+      rowKeyValue={`${parentKey}.${index}`}
       isHeader={false}
-      positionX={positionX}
-      treeConfig={nextExpandable}
       depth={depth + 1}
     />
   );
 
   const renderExpand = () => {
-    if (!isEmpty(data?.children) && expanded) {
-      if (isFunction(treeConfig?.renderExpand)) {
-        return treeConfig?.renderExpand({
-          data: data?.children!,
-          parentData: data,
-          index: rowIndex,
-          positionX,
-          columns,
-          depth,
-        });
-      }
-      return (
-        <View style={[styles.expand, treeConfig?.style]}>
-          <ScrollView nestedScrollEnabled>
-            {data?.children?.map((item, index) =>
-              isFunction(treeConfig?.renderItem)
-                ? treeConfig?.renderItem({
-                    item,
-                    index,
-                    positionX,
-                    columns,
-                    depth,
-                    defaultRender: renderItem,
-                  })
-                : renderItem({ item, index })
-            )}
-          </ScrollView>
-        </View>
-      );
+    if (isEmpty(data?.children) || !expanded) return null;
+
+    if (isFunction(treeConfig?.renderExpand)) {
+      return treeConfig?.renderExpand({
+        data: data?.children!,
+        parentData: data,
+        index: rowIndex,
+        columns,
+        depth,
+      });
     }
-    return null;
+
+    return (
+      <View style={[styles.expand, treeConfig?.style]}>
+        <ScrollView nestedScrollEnabled>
+          {data?.children?.map((item, index) =>
+            isFunction(treeConfig?.renderItem)
+              ? treeConfig?.renderItem({
+                  item,
+                  index,
+                  columns,
+                  depth,
+                  defaultRender: ({
+                    item: i,
+                    index: idx,
+                  }: {
+                    item: TItem;
+                    index: number;
+                  }) =>
+                    renderChildRow({
+                      item: i,
+                      index: idx,
+                      parentKey: rowKeyValue,
+                    }),
+                })
+              : renderChildRow({ item, index, parentKey: rowKeyValue })
+          )}
+        </ScrollView>
+      </View>
+    );
   };
 
   return (
@@ -274,7 +229,7 @@ const Row = (
     >
       <>
         {renderSeparator()}
-        <View style={[styles.row, style]}>{renderColumns()}</View>
+        <View style={[styles.row, effectiveStyle]}>{renderColumns()}</View>
         {renderExpand()}
       </>
     </TouchableWithoutFeedback>
